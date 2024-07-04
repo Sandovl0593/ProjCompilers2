@@ -6,19 +6,21 @@
 
 string Exp::binopToString(BinaryOp op) {
   switch(op) {
-  case PLUS: return "+";
-  case MINUS: return "-";
-  case MULT: return "*";
-  case DIV: return "/";
-  case EXP: return "**";
-  case LT: return "<";
-  case LTEQ: return "<=";
-  case EQ: return "==";
+    case PLUS: return "+";
+    case MINUS: return "-";
+    case MULT: return "*";
+    case DIV: return "/";
+    case EXP: return "**";
+    case LT: return "<";
+    case LTEQ: return "<=";
+    case GT: return ">";
+    case GTEQ: return ">=";
+    case EQ: return "==";
   }
   return "";
 }
 
-// Constructors
+// Constructors Exp
 BinaryExp::BinaryExp(Exp* l, Exp* r, BinaryOp op):left(l),right(r),op(op) {}
 NumberExp::NumberExp(int v):value(v) {}
 TrueFalseExp::TrueFalseExp(bool v):value(v) {}
@@ -27,6 +29,7 @@ ParenthExp::ParenthExp(Exp *e):e(e){}
 CondExp::CondExp(Exp *c, Exp* et, Exp* ef):cond(c), etrue(et), efalse(ef){}
 FCallExp::FCallExp(string fname, list<Exp*> args):fname(fname), args(args) {}
 
+// Destructors Exp
 Exp::~Exp() {}
 BinaryExp::~BinaryExp() { delete left; delete right; }
 NumberExp::~NumberExp() { }
@@ -128,11 +131,16 @@ ImpType FCallExp::accept(TypeVisitor* v) {
   return v->visit(this);
 }
 
+// Constructors Stm
 AssignStatement::AssignStatement(string id, Exp* e):id(id), rhs(e) { }
 PrintStatement::PrintStatement(Exp* e):e(e) { }
 IfStatement::IfStatement(Exp* c,Body *tb, Body* fb):cond(c),tbody(tb), fbody(fb) { }
 WhileStatement::WhileStatement(Exp* c,Body *b):cond(c),body(b) { }
 ReturnStatement::ReturnStatement(Exp* e):e(e) { }
+// -------- new
+ForDoStatement::ForDoStatement(string id, Exp* start, Exp* end, Body* b):id(id), start(start), end(end), body(b) { }
+FCallStatement::FCallStatement(string fname, list<Exp*> args):fname(fname), args(args) { }
+// --------
 
 StatementList::StatementList():slist() {}
 VarDec::VarDec(string type, list<string> vars):type(type), vars(vars) {}
@@ -142,12 +150,19 @@ FunDecList::FunDecList():fdlist() {}
 Body::Body(VarDecList* vdl, StatementList* sl):var_decs(vdl), slist(sl) {}
 Program::Program(VarDecList* vdl, FunDecList* fdl):var_decs(vdl), fun_decs(fdl) {}
 
+// Destructors Stm
 Stm::~Stm() {}
 AssignStatement::~AssignStatement() { delete rhs; }
 PrintStatement::~PrintStatement() { delete e; }
 IfStatement::~IfStatement() { delete fbody; delete tbody; delete cond; }
 WhileStatement::~WhileStatement() { delete body; delete cond; }
 ReturnStatement::~ReturnStatement() { delete e; }
+// -------- new
+ForDoStatement::~ForDoStatement() { delete start; delete end; delete body; }
+FCallStatement::~FCallStatement(){
+  while (!args.empty()) { delete args.front();  ; args.pop_front();  }
+}
+// --------
 
 StatementList::~StatementList() { }
 VarDec::~VarDec() { }
@@ -176,6 +191,16 @@ void WhileStatement::accept(ImpVisitor* v) {
 void ReturnStatement::accept(ImpVisitor* v) {
   return v->visit(this);
 }
+
+// -------- new
+void ForDoStatement::accept(ImpVisitor* v) {
+  return v->visit(this);
+}
+
+void FCallStatement::accept(ImpVisitor* v) {
+  return v->visit(this);
+}
+// --------
 
 void StatementList::add(Stm* s) { slist.push_back(s);  }
 
@@ -233,6 +258,15 @@ void ReturnStatement::accept(ImpValueVisitor* v) {
   return v->visit(this);
 }
 
+// -------- new
+void ForDoStatement::accept(ImpValueVisitor* v) {
+  return v->visit(this);
+}
+
+void FCallStatement::accept(ImpValueVisitor* v) {
+  return v->visit(this);
+}
+// --------
 
 void StatementList::accept(ImpValueVisitor* v) {
   return v->visit(this);
@@ -283,6 +317,16 @@ void WhileStatement::accept(TypeVisitor* v) {
 void ReturnStatement::accept(TypeVisitor* v) {
   return v->visit(this);
 }
+
+// -------- new
+void ForDoStatement::accept(TypeVisitor* v) {
+  return v->visit(this);
+}
+
+void FCallStatement::accept(TypeVisitor* v) {
+  return v->visit(this);
+}
+// --------
 
 
 void StatementList::accept(TypeVisitor* v) {

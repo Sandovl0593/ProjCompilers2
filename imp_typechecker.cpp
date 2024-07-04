@@ -201,6 +201,56 @@ void ImpTypeChecker::visit(WhileStatement* s) {
  return;
 }
 
+// -------- new
+void ImpTypeChecker::visit(ForDoStatement* s) {
+  ImpType type = s->start->accept(this);
+  if (!type.match(inttype)) {
+    cout << "Tipo de start en ForDoStatement debe de ser int" << endl;
+    exit(0);
+  }
+  type = s->end->accept(this);
+  if (!type.match(inttype)) {
+    cout << "Tipo de end en ForDoStatement debe de ser int" << endl;
+    exit(0);
+  }
+  env.add_var(s->id, inttype);
+  // que hacer con sp?
+  s->body->accept(this);
+  // que hacer con sp?
+  return;
+}
+
+void ImpTypeChecker::visit(FCallStatement* e) {
+  if (!env.check(e->fname)) {
+    cout << "(Function call): " << "Funcion " << e->fname << " no definida" << endl;
+    exit(0);
+  }
+  ImpType funtype = env.lookup(e->fname);
+  if (funtype.ttype != ImpType::FUN && funtype.ttype != ImpType::VOID) {
+    cout << "(Function call): " << e->fname << " no es una funcion" << endl;
+    exit(0);
+  }
+  int num_params = funtype.types.size()-1;
+  int num_args = e->args.size();
+  if (num_args != num_params) {
+    cout << "Argumentos faltantes en la funcion " << e->fname << ", le espera " << num_params << ", pero pasa solo " << num_args << endl;
+    exit(0);
+  }
+  ImpType argtype;
+  list<Exp*>::iterator it;
+  int i = 0;
+  for (it = e->args.begin(); it != e->args.end(); ++it) {
+    argtype = (*it)->accept(this);
+    if (argtype.ttype != funtype.types[i]) {
+      cout << "(Function call) Tipo de argumento no corresponde a tipo de parametro en fcall de: " << e->fname << endl;
+      exit(0);
+    }
+    i++;
+  }
+  return;
+}
+// --------
+
 void ImpTypeChecker::visit(ReturnStatement* s) {
  ImpType rtype = env.lookup("return");
   ImpType etype;

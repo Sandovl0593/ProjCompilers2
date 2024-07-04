@@ -3,10 +3,10 @@
 #include "imp_parser.hh"
 
 
-const char* Token::token_names[32] = {
-  "LPAREN" , "RPAREN", "PLUS", "MINUS", "MULT","DIV","EXP","LT","LTEQ","EQ",
+const char* Token::token_names[37] = {
+  "LPAREN" , "RPAREN", "PLUS", "MINUS", "MULT","DIV","EXP","LT","LTEQ", "GT", "GTEQ", "EQ",
   "NUM", "ID", "PRINT", "SEMICOLON", "COMMA", "ASSIGN", "CONDEXP", "IF", "THEN", "ELSE", "ENDIF", "WHILE", "DO",
-  "ENDWHILE", "ERR", "END", "VAR", "RETURN", "FUN", "ENDFUN", "TRUE", "FALSE" };
+  "ENDWHILE", "ERR", "END", "VAR", "RETURN", "FUN", "ENDFUN", "TRUE", "FALSE", "FOR", "ENDFOR", "IN" };
 
 Token::Token(Type type):type(type) { lexema = ""; }
 
@@ -43,6 +43,9 @@ Scanner::Scanner(string s):input(s),first(0),current(0) {
   reserved["endfun"] = Token::ENDFUN;
   reserved["true"] = Token::TRUE;
   reserved["false"] = Token::FALSE;
+  reserved["for"] = Token::FOR;
+  reserved["endfor"] = Token::ENDFOR;
+  reserved["in"] = Token::IN;
 }
 
 Token* Scanner::nextToken() {
@@ -244,9 +247,9 @@ FunDec* Parser::parseFunDec() {
       if (!match(Token::ID)) parserError("Expecting identifier in fun declaration");
       vars.push_back(previous->lexema);
       while(match(Token::COMMA)) {
-	types.push_back(previous->lexema);
-	if (!match(Token::ID)) parserError("Expecting identifier in fun declaration");
-	vars.push_back(previous->lexema);
+        types.push_back(previous->lexema);
+        if (!match(Token::ID)) parserError("Expecting identifier in fun declaration");
+        vars.push_back(previous->lexema);
       }     
     }
     if (!match(Token::RPAREN)) parserError("Esperaba RPAREN en declaracion de funcion");
@@ -300,11 +303,21 @@ Stm* Parser::parseStatement() {
   Body *tb, *fb;
   if (match(Token::ID)) {
     string lex = previous->lexema;
-    if (!match(Token::ASSIGN)) {
-      cout << "Error: esperaba =" << endl;
+    if (match(Token::ASSIGN))
+      s = new AssignStatement(lex, parseCExp());
+    else if (match(Token::LPAREN)) {
+      list<Exp*> args;
+      if (!check(Token::RPAREN)) {
+        args.push_back(parseCExp());
+        while(match(Token::COMMA))
+          args.push_back(parseCExp());
+      }
+      if (!match(Token::RPAREN)) parserError("Esperaba rparen");
+      s = new FCallStatement(lex,args);
+    } else {
+      cout << "Error: esperaba = o lparen" << endl;
       exit(0);
     }
-    s = new AssignStatement(lex, parseCExp());
     //memoria_update(lex, v);
   } else if (match(Token::PRINT)) {
     if (!match(Token::LPAREN)) {
@@ -320,14 +333,14 @@ Stm* Parser::parseStatement() {
   } else if (match(Token::IF)) {
       e = parseCExp();
       if (!match(Token::THEN))
-	parserError("Esperaba 'then'");
+        parserError("Esperaba 'then'");
       tb = parseBody();
       fb = NULL;
       if (match(Token::ELSE)) {
-	fb = parseBody();
+        fb = parseBody();
       }
       if (!match(Token::ENDIF))
-	parserError("Esperaba 'endif'");
+        parserError("Esperaba 'endif'");
       s = new IfStatement(e,tb,fb);
   } else if (match(Token::WHILE)) {
     e = parseCExp();
@@ -335,7 +348,7 @@ Stm* Parser::parseStatement() {
       parserError("Esperaba 'do'");
     tb = parseBody();
     if (!match(Token::ENDWHILE))
-	parserError("Esperaba 'endwhile'");
+      parserError("Esperaba 'endwhile'");
     s = new WhileStatement(e,tb);
   } else if (match(Token::RETURN)) {
     if (!match(Token::LPAREN)) parserError("Esperaba 'lparen'");
@@ -354,10 +367,17 @@ Stm* Parser::parseStatement() {
 Exp* Parser::parseCExp() {
   Exp *e, *rhs;
   e = parseExpression();
-  if(match(Token::LT) || match(Token::LTEQ) ||
-	match(Token::EQ)) {
+  if(match(Token::LT) || match(Token::LTEQ) || match(Token::EQ) || match(Token::GT) || match(Token::GTEQ) || match(Token::EQ)){
     Token::Type op = previous->type;
-    BinaryOp binop = (op==Token::LT)?LT:((op==Token::LTEQ)?LTEQ:EQ);
+    BinaryOp binop;
+    switch (op) {
+      case Token::LT: binop = LT; break;
+      case Token::LTEQ: binop = LTEQ; break;
+      case Token::GT: binop = GT; break;
+      case Token::GTEQ: binop = GTEQ; break;
+      case Token::EQ: binop = EQ; break;
+      default: cout << "Don't stay here !" << endl; exit(0);
+    }
     rhs = parseExpression();
     e = new BinaryExp(e, rhs, binop);
   }
@@ -414,10 +434,10 @@ Exp* Parser::parseFactor() {
     if (match(Token::LPAREN)) {
       list<Exp*> args;
       if (!check(Token::RPAREN)) {
-	args.push_back(parseCExp());
-	while(match(Token::COMMA)) {
-	  args.push_back(parseCExp());
-	}
+        args.push_back(parseCExp());
+        while(match(Token::COMMA)) {
+          args.push_back(parseCExp());
+        }
       }
       if (!match(Token::RPAREN)) parserError("Expecting rparen");
       return new FCallExp(lex,args);

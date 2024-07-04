@@ -20,7 +20,7 @@ private:
     while (idx >= 0) {
       typename std::unordered_map<std::string,T>::const_iterator it = ribs[idx].find(var);
       if (it != ribs[idx].end()) // not found
-	return idx;
+	      return idx;
       idx--;    
     }
     return -1;

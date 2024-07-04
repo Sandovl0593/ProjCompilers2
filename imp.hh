@@ -18,7 +18,7 @@ class ImpVisitor;
 class ImpValueVisitor;
 class TypeVisitor;
 
-enum BinaryOp { PLUS, MINUS, MULT, DIV, EXP, LT, LTEQ, EQ};
+enum BinaryOp { PLUS, MINUS, MULT, DIV, EXP, LT, LTEQ, GT, GTEQ, EQ };
 
 class Exp {
 public:
@@ -155,6 +155,17 @@ public:
   ~WhileStatement();
 };
 
+class ReturnStatement : public Stm {
+public:
+  Exp* e;
+  ReturnStatement(Exp* e);
+  void accept(ImpVisitor* v);
+  void accept(ImpValueVisitor* v);
+  void accept(TypeVisitor* v);
+  ~ReturnStatement();
+};
+
+// for <id> in (<start>, <end>) do <body> endfor
 class ForDoStatement : public Stm {
 public:
   string id;
@@ -167,16 +178,17 @@ public:
   ~ForDoStatement();
 };
 
-class ReturnStatement : public Stm {
+// call stm: <id>(<args>);
+class FCallStatement : public Stm {
 public:
-  Exp* e;
-  ReturnStatement(Exp* e);
+  string fname;
+  list<Exp*> args;
+  FCallStatement(string fname, list<Exp*> args);
   void accept(ImpVisitor* v);
   void accept(ImpValueVisitor* v);
   void accept(TypeVisitor* v);
-  ~ReturnStatement();
+  ~FCallStatement();
 };
-
 
 class StatementList {
 public:

@@ -1,7 +1,9 @@
 #include "imp_codegen.hh"
 
 ImpCodeGen::ImpCodeGen(ImpTypeChecker* a):analysis(a) {
-
+  nolabel = "";
+  current_label = 0;
+  mem_locals = 0;
 }
 
 void ImpCodeGen::codegen(string label, string instr) {
