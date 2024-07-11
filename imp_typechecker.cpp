@@ -126,6 +126,8 @@ void ImpTypeChecker::visit(VarDec* vd) {
   for (it = vd->vars.begin(); it != vd->vars.end(); ++it) {
     env.add_var(*it, type);
     // actualizar dir y max_dir
+    dir++;
+    if (dir > max_dir) max_dir = dir;
   }   
   return;
 }
