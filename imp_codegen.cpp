@@ -212,6 +212,30 @@ void ImpCodeGen::visit(ReturnStatement* s) {
   return;
 }
 
+// for <id> in (<start>, <end>) do <body> endfor
+void ImpCodeGen::visit(ForDoStatement* s) {
+  string l1 = next_label();
+  string l2 = next_label();
+  string l3 = next_label();
+  string l4 = next_label();
+  VarEntry ventry = direcciones.lookup(s->id);
+  s->start->accept(this);
+  codegen(nolabel,"store",ventry.dir);
+  codegen(l1,"skip");
+  codegen(nolabel,"load",ventry.dir);
+  s->end->accept(this);
+  codegen(nolabel,"sub");
+  codegen(nolabel,"jmpz",l2);
+  s->body->accept(this);
+  codegen(nolabel,"load",ventry.dir);
+  codegen(nolabel,"push",1);
+  codegen(nolabel,"add");
+  codegen(nolabel,"store",ventry.dir);
+  codegen(nolabel,"goto",l1);
+  codegen(l2,"skip");
+  return;
+}
+
 
 int ImpCodeGen::visit(BinaryExp* e) {
   e->left->accept(this);
