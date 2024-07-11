@@ -218,7 +218,12 @@ void ImpCodeGen::visit(ForDoStatement* s) {
   string l2 = next_label();
   string l3 = next_label();
   string l4 = next_label();
-  VarEntry ventry = direcciones.lookup(s->id);
+  // create new variable <id>
+  current_dir++;
+  VarEntry ventry;
+  ventry.dir = current_dir;
+  ventry.is_global = false;
+  direcciones.add_var(s->id, ventry);
   s->start->accept(this);
   codegen(nolabel,"store",ventry.dir);
   codegen(l1,"skip");
