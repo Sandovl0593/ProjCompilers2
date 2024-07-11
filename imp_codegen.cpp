@@ -77,6 +77,7 @@ void ImpCodeGen::visit(Program* p) {
 void ImpCodeGen::visit(Body * b) {
 
   // guardar direccion inicial current_dir
+
   
   direcciones.add_level();
   
@@ -125,14 +126,19 @@ void ImpCodeGen::visit(FunDec* fd) {
   VarEntry ventry;
 
   // agregar direcciones de argumentos
-
+  for(auto it = fd->types.begin(); it != fd->types.end(); ++it) {
+    current_dir++;
+    ventry.dir = current_dir;
+    ventry.is_global = false;
+    direcciones.add_var(*it, ventry);
+  }
   // agregar direccion de return
-
+  current_dir++;
   // generar codigo para fundec
+  codegen(get_flabel(fd->fname),"skip");
+  num_params = m - 1; // -1 para retirar el return
 
-  num_params = m;
-
-  //fd->body->accept(this);
+  fd->body->accept(this);
   // -- sacar comentarios para generar codigo del cuerpo
 
   return;
@@ -151,8 +157,10 @@ void ImpCodeGen::visit(AssignStatement* s) {
   s->rhs->accept(this);
   VarEntry ventry = direcciones.lookup(s->id);
   // generar codigo store/storer
-  codegen(nolabel,"store", 100); // modificar 100 global vs local
-
+  if (ventry.is_global)
+    codegen(nolabel,"store", ventry.dir);
+  else
+    codegen(nolabel,"storer", ventry.dir);
   return;
 }
 
@@ -193,10 +201,14 @@ void ImpCodeGen::visit(WhileStatement* s) {
   return;
 }
 
+
+
 void ImpCodeGen::visit(ReturnStatement* s) {
   // agregar codigo
-  
-  codegen(nolabel,"return", 100);  // modifcar 100
+
+  s->e->accept(this);// return y luego argumentos profe:tienes que retroceder
+  //codegen(nolabel,"return", ventry.dir);  // modificar 100
+  // Modificar 100
   return;
 }
 
@@ -264,7 +276,10 @@ int ImpCodeGen::visit(FCallExp* e) {
   ImpType ftype = fentry.ftype;
 
   // agregar codigo
-
+  for (auto it = e->args.begin(); it != e->args.end(); ++it) {
+    (*it)->accept(this);
+  }
+  codegen(nolabel,"pusha",get_flabel(e->fname));
   codegen(nolabel,"call");
   return 0;
 }
