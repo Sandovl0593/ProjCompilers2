@@ -134,6 +134,9 @@ void ImpCodeGen::visit(FunDec* fd) {
   }
   // agregar direccion de return
   current_dir++;
+  ventry.dir = current_dir;
+  ventry.is_global = false;
+  direcciones.add_var("return", ventry);
   // generar codigo para fundec
   codegen(get_flabel(fd->fname),"skip");
   num_params = m - 1; // -1 para retirar el return

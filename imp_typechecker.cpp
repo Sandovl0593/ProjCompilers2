@@ -62,13 +62,14 @@ void ImpTypeChecker::visit(Program* p) {
 
 void ImpTypeChecker::visit(Body* b) {
   // guardar direccion actual (dir)
-  
+  int var = dir;
   env.add_level();
   b->var_decs->accept(this);
   b->slist->accept(this);
   env.remove_level();
   // restaurar direccion de entrada
-  
+  if(dir > max_dir) max_dir = dir;
+  dir = var;
   return;
 }
 
@@ -128,6 +129,7 @@ void ImpTypeChecker::visit(VarDec* vd) {
     // actualizar dir y max_dir
     dir++;
     if (dir > max_dir) max_dir = dir;
+    //sp_incr(1);
   }   
   return;
 }
