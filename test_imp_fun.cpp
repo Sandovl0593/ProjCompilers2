@@ -1,6 +1,5 @@
 #include <sstream>
 #include <iostream>
-#include <iostream>
 
 #include "imp.hh"
 #include "imp_parser.hh"
@@ -33,6 +32,7 @@ int main(int argc, const char* argv[]) {
   ImpTypeChecker checker;
   ImpInterpreter interpreter;
   
+  
   printer.print(program);
 
   cout << "Type checking:" << endl;
@@ -52,5 +52,5 @@ int main(int argc, const char* argv[]) {
 
   delete program;
 
-
+  return 0;
 }

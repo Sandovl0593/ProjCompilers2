@@ -213,9 +213,25 @@ void ImpCodeGen::visit(ReturnStatement* s) {
 
   s->e->accept(this);// return y luego argumentos profe:tienes que retroceder
   //codegen(nolabel,"return", ventry.dir);  // modificar 100
+
   // Modificar 100
   return;
 }
+
+// Genera codigo para llamada a funcion
+void ImpCodeGen::visit(FCallStatement* s) {
+  FEntry fentry = analysis->ftable.lookup(s->fname);
+  ImpType ftype = fentry.ftype;
+
+  // agregar codigo
+  for (auto it = s->args.begin(); it != s->args.end(); ++it) {
+    (*it)->accept(this);
+  }
+  codegen(nolabel,"pusha",get_flabel(s->fname));
+  codegen(nolabel,"call");
+  return;
+}
+
 
 // for <id> in (<start>, <end>) do <body> endfor
 void ImpCodeGen::visit(ForDoStatement* s) {
