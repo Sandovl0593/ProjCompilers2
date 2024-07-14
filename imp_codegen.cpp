@@ -77,7 +77,7 @@ void ImpCodeGen::visit(Program* p) {
 void ImpCodeGen::visit(Body * b) {
 
   // guardar direccion inicial current_dir
-
+  int var = current_dir;
   
   direcciones.add_level();
   
@@ -87,6 +87,8 @@ void ImpCodeGen::visit(Body * b) {
   direcciones.remove_level();
 
   // restaurar dir
+  if (current_dir > mem_locals) mem_locals = current_dir;
+  current_dir = var;
   return;
 }
 
@@ -205,7 +207,7 @@ void ImpCodeGen::visit(WhileStatement* s) {
 }
 
 
-
+// Genera codigo para return
 void ImpCodeGen::visit(ReturnStatement* s) {
   // agregar codigo
 
@@ -244,7 +246,7 @@ void ImpCodeGen::visit(ForDoStatement* s) {
   return;
 }
 
-
+// Genera codigo para llamada a funcion
 int ImpCodeGen::visit(BinaryExp* e) {
   e->left->accept(this);
   e->right->accept(this);
@@ -262,7 +264,7 @@ int ImpCodeGen::visit(BinaryExp* e) {
   codegen(nolabel, op);
   return 0;
 }
-
+// Genera codigo para expresion numerica
 int ImpCodeGen::visit(NumberExp* e) {
   codegen(nolabel,"push ",e->value);
   return 0;
@@ -273,7 +275,7 @@ int ImpCodeGen::visit(TrueFalseExp* e) {
  
   return 0;
 }
-
+// Genera codigo para expresion identificador
 int ImpCodeGen::visit(IdExp* e) {
   VarEntry ventry = direcciones.lookup(e->id);
   if (ventry.is_global)
@@ -287,7 +289,7 @@ int ImpCodeGen::visit(ParenthExp* ep) {
   ep->e->accept(this);
   return 0;
 }
-
+// Genera codigo para expresion condicional
 int ImpCodeGen::visit(CondExp* e) {
   string l1 = next_label();
   string l2 = next_label();
@@ -301,7 +303,7 @@ int ImpCodeGen::visit(CondExp* e) {
   codegen(l2, "skip");
   return 0;
 }
-
+// Retorna valor de la funcion
 int ImpCodeGen::visit(FCallExp* e) {
 
   FEntry fentry = analysis->ftable.lookup(e->fname);
