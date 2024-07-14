@@ -1,0 +1,22 @@
+var int e, r;
+
+fun int forstm(int w)
+  var int q;
+  q = 10;
+  w = 1;
+  for i in (1, q) do
+     print(i);
+     w = w + 1
+  endfor;
+  
+  print(w + 3);
+  return (w)
+endfun
+
+fun void main()
+  var int s;
+  e = s * r;
+  r = forstm(e);
+  print(r);
+  return ()
+endfun

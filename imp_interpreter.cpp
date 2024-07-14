@@ -156,6 +156,7 @@ void ImpInterpreter::visit(ForDoStatement* s) {
     // exit(0);
   }
   for (int i = start.int_value; i <= end.int_value; i++) {
+    v.int_value = i;
     env.update(s->id, v);
     s->body->accept(this);
   }

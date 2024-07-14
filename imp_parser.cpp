@@ -319,7 +319,8 @@ Stm* Parser::parseStatement() {
       exit(0);
     }
     //memoria_update(lex, v);
-  } else if (match(Token::PRINT)) {
+  }
+  else if (match(Token::PRINT)) {
     if (!match(Token::LPAREN)) {
       cout << "Error: esperaba ( " << endl;
       exit(0);
@@ -330,7 +331,8 @@ Stm* Parser::parseStatement() {
       exit(0);
     }
     s = new PrintStatement(e);
-  } else if (match(Token::IF)) {
+  } 
+  else if (match(Token::IF)) {
       e = parseCExp();
       if (!match(Token::THEN))
         parserError("Esperaba 'then'");
@@ -342,7 +344,8 @@ Stm* Parser::parseStatement() {
       if (!match(Token::ENDIF))
         parserError("Esperaba 'endif'");
       s = new IfStatement(e,tb,fb);
-  } else if (match(Token::WHILE)) {
+  } 
+  else if (match(Token::WHILE)) {
     e = parseCExp();
     if (!match(Token::DO))
       parserError("Esperaba 'do'");
@@ -350,14 +353,30 @@ Stm* Parser::parseStatement() {
     if (!match(Token::ENDWHILE))
       parserError("Esperaba 'endwhile'");
     s = new WhileStatement(e,tb);
-  } else if (match(Token::RETURN)) {
+  } 
+  else if (match(Token::FOR)) {
+    if (!match(Token::ID))     parserError("Esperaba identifier");
+    string id = previous->lexema;
+    if (!match(Token::IN))     parserError("Esperaba 'in'");
+    if (!match(Token::LPAREN)) parserError("Esperaba 'lparen'");
+    Exp* e1 = parseCExp();
+    if (!match(Token::COMMA))  parserError("Esperaba comma");
+    Exp* e2 = parseCExp();
+    if (!match(Token::RPAREN)) parserError("Esperaba 'rparen'");
+    if (!match(Token::DO))     parserError("Esperaba 'do'");
+    tb = parseBody();
+    if (!match(Token::ENDFOR)) parserError("Esperaba 'endfor'");
+    s = new ForDoStatement(id,e1,e2,tb);
+  }
+  else if (match(Token::RETURN)) {
     if (!match(Token::LPAREN)) parserError("Esperaba 'lparen'");
     if (!check(Token::RPAREN)) 
       e = parseCExp();
     if (!match(Token::RPAREN)) parserError("Esperaba 'rparen'");
     s = new ReturnStatement(e);
     
-  } else {
+  }
+  else {
     cout << "No se encontro Statement" << endl;
     exit(0);
   }
