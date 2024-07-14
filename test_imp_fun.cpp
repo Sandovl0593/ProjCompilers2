@@ -19,8 +19,7 @@ int main(int argc, const char* argv[]) {
     exit(1);
   }
   
-  string inp = argv[1];
-  std::ifstream t("test/" + inp);
+  std::ifstream t(argv[1]);
   std::stringstream buffer;
   buffer << t.rdbuf();
   Scanner scanner(buffer.str());

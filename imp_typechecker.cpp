@@ -61,15 +61,15 @@ void ImpTypeChecker::visit(Program* p) {
 }
 
 void ImpTypeChecker::visit(Body* b) {
-  // guardar direccion actual (dir)
-  int var = dir;
+  // guardar direccion actual (dir) -- Cambio 2
+  int current_dir = dir;
   env.add_level();
   b->var_decs->accept(this);
   b->slist->accept(this);
   env.remove_level();
   // restaurar direccion de entrada
-  if(dir > max_dir) max_dir = dir;
-  dir = var;
+  if (dir > max_dir) max_dir = dir;
+  dir = current_dir;
   return;
 }
 
@@ -126,10 +126,10 @@ void ImpTypeChecker::visit(VarDec* vd) {
   list<string>::iterator it;
   for (it = vd->vars.begin(); it != vd->vars.end(); ++it) {
     env.add_var(*it, type);
-    // actualizar dir y max_dir
+    // actualizar dir y max_dir -- Cambio uno
     dir++;
     if (dir > max_dir) max_dir = dir;
-    //sp_incr(1);
+    //sp_incr(1); // Cambio 3
   }   
   return;
 }
@@ -144,6 +144,7 @@ void ImpTypeChecker::visit(FunDec* fd) {
   for (it = fd->vars.begin(); it != fd->vars.end(); ++it, i++) {
     ptype.set_basic_type(funtype.types[i]);
     env.add_var(*it,ptype);
+    //sp_incr(1); // Cambio 4
   } 
   env.add_var("return", rtype);
   fd->body->accept(this);
@@ -169,6 +170,7 @@ void ImpTypeChecker::visit(AssignStatement* s) {
     exit(0);
   }
   // que hacer con sp?
+  sp_decr(1);
   ImpType var_type = env.lookup(s->id);  
   if (!type.match(var_type)) {
     cout << "Tipo incorrecto en Assign a " << s->id << endl;
@@ -180,8 +182,10 @@ void ImpTypeChecker::visit(AssignStatement* s) {
 void ImpTypeChecker::visit(PrintStatement* s) {
   s->e->accept(this);
   // que hacer con sp?
+  sp_decr(1);
   return;
 }
+
 
 void ImpTypeChecker::visit(IfStatement* s) {
   if (!s->cond->accept(this).match(booltype)) {
@@ -189,6 +193,7 @@ void ImpTypeChecker::visit(IfStatement* s) {
     exit(0);
   }
   // que hacer con sp?
+  sp_decr(1);
   s->tbody->accept(this);
   if (s->fbody != NULL)
     s->fbody->accept(this);
@@ -201,11 +206,11 @@ void ImpTypeChecker::visit(WhileStatement* s) {
     exit(0);
   }
   // que hacer con sp?
+  sp_decr(1);
   s->body->accept(this);
  return;
 }
 
-// -------- new
 void ImpTypeChecker::visit(ForDoStatement* s) {
   ImpType type = s->start->accept(this);
   if (!type.match(inttype)) {
@@ -217,10 +222,19 @@ void ImpTypeChecker::visit(ForDoStatement* s) {
     cout << "Tipo de end en ForDoStatement debe de ser int" << endl;
     exit(0);
   }
+  /*
+  for z in (5,8) do
+    print(z)
+  endfor
+   */
   env.add_var(s->id, inttype);
   // que hacer con sp?
+  // Hacer decrement?
+  //sp_decr(1);
+  int sp_before = sp;
   s->body->accept(this);
   // que hacer con sp?
+  sp = sp_before;
   return;
 }
 
@@ -253,15 +267,15 @@ void ImpTypeChecker::visit(FCallStatement* e) {
   }
   return;
 }
-// --------
 
 void ImpTypeChecker::visit(ReturnStatement* s) {
  ImpType rtype = env.lookup("return");
   ImpType etype;
-  if (s->e != NULL)
+  if (s->e != NULL){
     etype = s->e->accept(this);
   // que hacer con sp?
-  else
+    sp_decr(1);
+  }else
     etype = voidtype;
   if (!rtype.match(etype)) {
     cout << "Return type mismatch: " << rtype << "<->" << etype << endl;
@@ -294,24 +308,28 @@ ImpType ImpTypeChecker::visit(BinaryExp* e) {
     break;
   }
   // que hacer con sp?
+  sp_decr(1);
   return result;
 }
 
 ImpType ImpTypeChecker::visit(NumberExp* e) {
   // que hacer con sp?
+  sp_incr(1);
   return inttype;
 }
 
 ImpType ImpTypeChecker::visit(TrueFalseExp* e) {
   // que hacer con sp?
+  sp_incr(1);
   return booltype;
 }
 
 ImpType ImpTypeChecker::visit(IdExp* e) {
   // que hacer con sp?
-  if (env.check(e->id))
+  if (env.check(e->id)){
+    sp_incr(1);
     return env.lookup(e->id);
-  else {
+  }else {
     cout << "Variable indefinida: " << e->id << endl;
     exit(0);
   }
@@ -321,13 +339,19 @@ ImpType ImpTypeChecker::visit(ParenthExp* ep) {
   return ep->e->accept(this);
 }
 
+
 ImpType ImpTypeChecker::visit(CondExp* e) {
   if (!e->cond->accept(this).match(booltype)) {
     cout << "Tipo en ifexp debe de ser bool" << endl;
     exit(0);
-  }
+  } //(5 < 6, 5 + 100, 0)
   // que hacer con sp?
+  // Se tiene que guardar el stack pointer antes de evaluar la condicion
+  sp_decr(1);
+  int sp_before = sp;
   ImpType ttype =  e->etrue->accept(this);
+  // Se tiene que guardar el stack pointer despues de evaluar la condicion
+  sp = sp_before;
   // que hacer con sp?
   if (!ttype.match(e->efalse->accept(this))) {
     cout << "Tipos en ifexp deben de ser iguales" << endl;
@@ -354,7 +378,10 @@ ImpType ImpTypeChecker::visit(FCallExp* e) {
   rtype.set_basic_type(funtype.types[num_fun_args]);
 
   // que hacer con sp y el valor de retorno?
-  
+  if(rtype.ttype != ImpType::VOID) {
+    sp_incr(1);
+  }
+
   if (num_fun_args != num_fcall_args) {
     cout << "(Function call) Numero de argumentos no corresponde a declaracion de: " << e->fname << endl;
     exit(0);
@@ -370,7 +397,8 @@ ImpType ImpTypeChecker::visit(FCallExp* e) {
     }
     i++;
   }
-
+  // Posible error
+  sp_decr(1);
   
   return rtype;
 }
