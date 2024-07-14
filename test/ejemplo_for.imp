@@ -3,9 +3,8 @@ var int e, r;
 fun int forstm(int w)
   var int q;
   q = 10;
-  w = 1;
   for i in (1, q) do
-     print(i);
+     print(w);
      w = w + 1
   endfor;
   
@@ -15,8 +14,8 @@ endfun
 
 fun void main()
   var int s;
-  e = s * r;
-  r = forstm(e);
+  s = 4;
+  r = forstm(s);
   print(r);
   return ()
 endfun
