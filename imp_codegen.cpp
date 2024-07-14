@@ -204,6 +204,18 @@ void ImpCodeGen::visit(WhileStatement* s) {
   return;
 }
 
+void ImpCodeGen::visit(FCallStatement* s) {
+  FEntry fentry = analysis->ftable.lookup(s->fname);
+  ImpType ftype = fentry.ftype;
+
+  // agregar codigo
+  for (auto it = s->args.begin(); it != s->args.end(); ++it) {
+    (*it)->accept(this);
+  }
+  codegen(nolabel,"pusha",get_flabel(s->fname));
+  codegen(nolabel,"call");
+  return;
+}
 
 
 void ImpCodeGen::visit(ReturnStatement* s) {
