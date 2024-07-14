@@ -129,7 +129,6 @@ void ImpTypeChecker::visit(VarDec* vd) {
     // actualizar dir y max_dir
     dir++;
     if (dir > max_dir) max_dir = dir;
-    //sp_incr(1);
   }   
   return;
 }
@@ -169,6 +168,7 @@ void ImpTypeChecker::visit(AssignStatement* s) {
     exit(0);
   }
   // que hacer con sp?
+  sp_decr(1);
   ImpType var_type = env.lookup(s->id);  
   if (!type.match(var_type)) {
     cout << "Tipo incorrecto en Assign a " << s->id << endl;
@@ -180,6 +180,7 @@ void ImpTypeChecker::visit(AssignStatement* s) {
 void ImpTypeChecker::visit(PrintStatement* s) {
   s->e->accept(this);
   // que hacer con sp?
+  sp_decr(1);
   return;
 }
 
@@ -189,6 +190,7 @@ void ImpTypeChecker::visit(IfStatement* s) {
     exit(0);
   }
   // que hacer con sp?
+  sp_decr(1);
   s->tbody->accept(this);
   if (s->fbody != NULL)
     s->fbody->accept(this);
@@ -201,6 +203,7 @@ void ImpTypeChecker::visit(WhileStatement* s) {
     exit(0);
   }
   // que hacer con sp?
+  sp_decr(1);
   s->body->accept(this);
  return;
 }
@@ -219,8 +222,10 @@ void ImpTypeChecker::visit(ForDoStatement* s) {
   }
   env.add_var(s->id, inttype);
   // que hacer con sp?
+  int sp_before = sp;
   s->body->accept(this);
   // que hacer con sp?
+  sp = sp_before;
   return;
 }
 
@@ -258,10 +263,11 @@ void ImpTypeChecker::visit(FCallStatement* e) {
 void ImpTypeChecker::visit(ReturnStatement* s) {
  ImpType rtype = env.lookup("return");
   ImpType etype;
-  if (s->e != NULL)
+  if (s->e != NULL){
     etype = s->e->accept(this);
   // que hacer con sp?
-  else
+    sp_decr(1);
+  }else
     etype = voidtype;
   if (!rtype.match(etype)) {
     cout << "Return type mismatch: " << rtype << "<->" << etype << endl;
@@ -294,24 +300,28 @@ ImpType ImpTypeChecker::visit(BinaryExp* e) {
     break;
   }
   // que hacer con sp?
+  sp_decr(1);
   return result;
 }
 
 ImpType ImpTypeChecker::visit(NumberExp* e) {
   // que hacer con sp?
+  sp_incr(1);
   return inttype;
 }
 
 ImpType ImpTypeChecker::visit(TrueFalseExp* e) {
   // que hacer con sp?
+  sp_incr(1);
   return booltype;
 }
 
 ImpType ImpTypeChecker::visit(IdExp* e) {
   // que hacer con sp?
-  if (env.check(e->id))
+  if (env.check(e->id)){
+    sp_incr(1);
     return env.lookup(e->id);
-  else {
+  }else {
     cout << "Variable indefinida: " << e->id << endl;
     exit(0);
   }
@@ -327,8 +337,11 @@ ImpType ImpTypeChecker::visit(CondExp* e) {
     exit(0);
   }
   // que hacer con sp?
+  sp_decr(1);
+  int sp_before = sp;
   ImpType ttype =  e->etrue->accept(this);
   // que hacer con sp?
+  sp = sp_before;
   if (!ttype.match(e->efalse->accept(this))) {
     cout << "Tipos en ifexp deben de ser iguales" << endl;
     exit(0);
@@ -354,7 +367,10 @@ ImpType ImpTypeChecker::visit(FCallExp* e) {
   rtype.set_basic_type(funtype.types[num_fun_args]);
 
   // que hacer con sp y el valor de retorno?
-  
+  if(rtype.ttype != ImpType::VOID) {
+    sp_incr(1);
+  }
+
   if (num_fun_args != num_fcall_args) {
     cout << "(Function call) Numero de argumentos no corresponde a declaracion de: " << e->fname << endl;
     exit(0);
@@ -370,7 +386,7 @@ ImpType ImpTypeChecker::visit(FCallExp* e) {
     }
     i++;
   }
-
+  sp_decr(1);
   
   return rtype;
 }
