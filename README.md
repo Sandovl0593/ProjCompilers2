@@ -1,15 +1,24 @@
-# ProyCompilers2
 
-- Informe de reporte del [proyecto 2](https://github.com/Sandovl0593/ProjCompilers2/blob/main/informeProy.pdf)
-<!-- - Informe de reporte del [proyecto 2](www) -->
 
-## Generar código SVM
 
-```
-make compiler
-```
+# Proyecto Compiladores
 
 ## Integrantes
 
 - Adrian Sandoval Huamaní
 - Andrés Jaffet Riveros Soto
+
+## P1 (Typechecker/Codegen en IMP-FUN)
+
+
+## P2 (FCallStm)
+
+
+## P3 (ForDoStm)
+
+### Parser
+### AST
+### Interpreter
+### Printer
+### TypeChecker
+### Codegen
